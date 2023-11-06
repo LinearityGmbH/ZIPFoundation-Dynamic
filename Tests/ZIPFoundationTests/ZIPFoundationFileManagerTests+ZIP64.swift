@@ -2,7 +2,7 @@
 //  ZIPFoundationFileManagerTests+ZIP64.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     private enum ZIP64FileManagerTestsError: Error, CustomStringConvertible {
         case failedToZipItem(url: URL)
         case failedToReadArchive(url: URL)
@@ -112,9 +113,7 @@ extension ZIPFoundationTests {
         } catch {
             throw ZIP64FileManagerTestsError.failedToZipItem(url: assetURL)
         }
-        guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
-            throw ZIP64FileManagerTestsError.failedToZipItem(url: fileArchiveURL)
-        }
+        let archive = try Archive(url: fileArchiveURL, accessMode: .read)
         XCTAssertNotNil(archive[assetURL.lastPathComponent])
         XCTAssert(archive.checkIntegrity())
     }

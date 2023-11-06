@@ -2,7 +2,7 @@
 //  ZIPFoundationErrorConditionTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -11,32 +11,34 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testArchiveReadErrorConditions() {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
-        let nonExistantArchive = Archive(url: nonExistantURL, accessMode: .read)
-        XCTAssertNil(nonExistantArchive)
-        var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        XCTAssertPOSIXError(try Archive(url: nonExistantURL, accessMode: .update), throwsErrorWithCode: .ENOENT)
         let processInfo = ProcessInfo.processInfo
-        unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
         let fileManager = FileManager()
-        var result = fileManager.createFile(atPath: unreadableArchiveURL.path, contents: nil,
-                                            attributes: noPermissionAttributes)
-        XCTAssert(result == true)
-        let unreadableArchive = Archive(url: unreadableArchiveURL, accessMode: .read)
-        XCTAssertNil(unreadableArchive)
+        var result = false
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
         let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultFilePermissions)]
         result = fileManager.createFile(atPath: noEndOfCentralDirectoryArchiveURL.path, contents: nil,
                                         attributes: fullPermissionAttributes)
         XCTAssert(result == true)
-        let noEndOfCentralDirectoryArchive = Archive(url: noEndOfCentralDirectoryArchiveURL,
-                                                     accessMode: .read)
-        XCTAssertNil(noEndOfCentralDirectoryArchive)
+        XCTAssertSwiftError(try Archive(url: noEndOfCentralDirectoryArchiveURL, accessMode: .read),
+                            throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
+        self.runWithUnprivilegedGroup {
+            var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+            unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
+            let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
+            result = fileManager.createFile(atPath: unreadableArchiveURL.path, contents: nil,
+                                                attributes: noPermissionAttributes)
+            XCTAssert(result == true)
+            XCTAssertPOSIXError(try Archive(url: unreadableArchiveURL, accessMode: .update),
+                                throwsErrorWithCode: .EACCES)
+        }
     }
 
-    func testArchiveIteratorErrorConditions() {
+    func testArchiveIteratorErrorConditions() throws {
         var didFailToMakeIteratorAsExpected = true
         // Construct an archive that only contains an EndOfCentralDirectoryRecord
         // with a number of entries > 0.
@@ -54,11 +56,8 @@ extension ZIPFoundationTests {
                                             contents: invalidCentralDirECDSData,
                                             attributes: nil)
         XCTAssert(result == true)
-        guard let invalidCentralDirArchive = Archive(url: invalidCentralDirArchiveURL,
-                                                     accessMode: .read) else {
-            XCTFail("Failed to read archive.")
-            return
-        }
+        let invalidCentralDirArchive = try Archive(url: invalidCentralDirArchiveURL,
+                                                   accessMode: .read)
         for _ in invalidCentralDirArchive {
             didFailToMakeIteratorAsExpected = false
         }
@@ -73,11 +72,8 @@ extension ZIPFoundationTests {
             // should fail.
             invalidLocalFHArchiveData[26] = 0xFF
             try invalidLocalFHArchiveData.write(to: invalidLocalFHArchiveURL)
-            guard let invalidLocalFHArchive = Archive(url: invalidLocalFHArchiveURL,
-                                                      accessMode: .read) else {
-                XCTFail("Failed to read local file header.")
-                return
-            }
+            let invalidLocalFHArchive = try Archive(url: invalidLocalFHArchiveURL,
+                                                    accessMode: .read)
             for _ in invalidLocalFHArchive {
                 didFailToMakeIteratorAsExpected = false
             }
@@ -104,5 +100,10 @@ extension ZIPFoundationTests {
                                                                            additionalDataProvider: {_ -> Data in
                                                                             return Data() })
         XCTAssertNil(invalidECDRCommentLength)
+    }
+
+    func testInvalidPOSIXError() {
+        let invalidPOSIXError = POSIXError(Int32.max, path: "/")
+        XCTAssert(invalidPOSIXError.code == .EPERM)
     }
 }

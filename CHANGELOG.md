@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.9.17](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.17)
+
+### Added
+ - Added visionOS support
+ - Added Xcode privacy manifest
+ - Added throwing initializers for `Archive`
+ 
+### Updated
+ - Improved symlink handling
+ - Improved forwarding of underlying errors
+
+## [0.9.16](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.16)
+
+### Added
+ - Added `isCompressed` accessor to `Entry`
+ 
+### Updated
+ - Improved README and documentation
+ - Fixed deprecation in the random test data generator
+
+## [0.9.15](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.15)
+
+### Added
+ - Added initial support for building for Android
+ 
+### Updated
+ - Fixed CRC32 calculation for non-final compression streams
+ - Fixed evaluation of CRC32 checksums when using `FileManager.unzipItem`
+
 ## [0.9.14](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.14)
 
 ### Updated

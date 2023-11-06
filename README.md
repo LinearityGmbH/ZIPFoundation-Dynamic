@@ -3,7 +3,7 @@
 [![Swift Package Manager compatible](https://img.shields.io/badge/SPM-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager)
 [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
 [![CocoaPods Compatible](https://img.shields.io/cocoapods/v/ZIPFoundation.svg)](https://cocoapods.org/pods/ZIPFoundation)
-[![Platform](https://img.shields.io/badge/Platforms-macOS%20|%20iOS%20|%20tvOS%20|%20watchOS%20|%20Linux-lightgrey.svg)](https://github.com/weichsel/ZIPFoundation)
+[![Platform](https://img.shields.io/badge/Platforms-macOS%20|%20iOS%20|%20tvOS%20|%20watchOS%20|%20visionOS%20|%20Linux-lightgrey.svg)](https://github.com/weichsel/ZIPFoundation)
 [![Twitter](https://img.shields.io/badge/twitter-@weichsel-blue.svg?style=flat)](http://twitter.com/weichsel)
 
 ZIP Foundation is a library to create, read and modify ZIP archive files.  
@@ -40,7 +40,7 @@ To learn more about the performance characteristics of the framework, you can re
 
 ## Requirements
 
-- iOS 12.0+ / macOS 10.11+ / tvOS 12.0+ / watchOS 2.0+
+- iOS 12.0+ / macOS 10.11+ / tvOS 12.0+ / watchOS 2.0+ / visionOS 1.0+
 - Or Linux with zlib development package
 - Xcode 11.0
 - Swift 4.0
@@ -256,7 +256,7 @@ You can also add entries from an in-memory data source. To do this you have to p
 ```swift
 let string = "abcdefghijkl"
 guard let data = string.data(using: .utf8) else { return }
-try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: UInt64(string.count), bufferSize: 4, provider: { (position, size) -> Data in
+try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: UInt64(data.count), bufferSize: 4, provider: { (position, size) -> Data in
     // This will be called until `data` is exhausted (3x in this case).
     return data.subdata(in: position..<position+size)
 })
@@ -276,7 +276,7 @@ To _create_ an in-memory archive, the `data` parameter can be omitted:
 let string = "Some string!"
 guard let archive = Archive(accessMode: .create),
         let data = string.data(using: .utf8) else { return }
-    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: UInt64(string.count), bufferSize: 4, provider: { (position, size) -> Data in
+    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: UInt64(data.count), bufferSize: 4, provider: { (position, size) -> Data in
         return data.subdata(in: position..<position+size)
     })
 let archiveData = archive.data
